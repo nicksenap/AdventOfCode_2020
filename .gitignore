@@ -2,3 +2,4 @@ node_modules/
 package.json
 *.log
 *.lock
+.DS_Store
