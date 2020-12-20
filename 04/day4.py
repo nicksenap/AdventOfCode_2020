@@ -1,90 +1,8 @@
-const critical = 
-[
-    'iyr',
-    'pid', 'eyr',
-    'hcl', 'ecl',
-    'byr', 'hgt'
-]
+import sys
+import re
 
-const day4 = (input) => {
-    let result = 0;
-    const list = input.split('\n\n');
-    list.forEach(item => {
-        const fields = item.match(/([a-z]{3})/g);
-        if(critical.every(r => fields.includes(r))){ 
-            result++;
-        }
-    });
-    console.log(result)
-}
-
-const day4Part2 = (input) => {
-    let result = 0;
-    const list = input.split('\n\n');
-    // list.slice(1,20).forEach(item => {
-    list.forEach(item => {
-        const fields = item.match(/([a-z]{3})/g);
-        if(critical.every(r => fields.includes(r))){ 
-            let isValid = true;
-            for (let index = 0; index < critical.length; index++) {
-                if(!isValid) {break;}
-                let c = critical[index];
-                let raw = new RegExp(`${c}:(#?\\w+)`, 'g').exec(item);
-                if(raw !== null) {
-                    let val = raw[1];
-                    switch (c) {
-                        case 'byr':
-                            isValid = parseInt(val) <= 2002 && parseInt(val) >= 1920;
-                            break;
-                        case 'iyr':
-                            isValid = parseInt(val) <= 2020 && parseInt(val) >= 2010;
-                            break;
-                        case 'eyr':
-                            isValid = parseInt(val) <= 2030 && parseInt(val) >= 2020;
-                            break;
-                        case 'hgt':
-                            let res = /(\d+)([a-z]{2})/g.exec(val)
-                            if(res === null || res.length < 2) { isValid = false; } else {
-                                let measure = res[1]
-                                if (measure === 'cm') isValid = parseInt(res[0]) >= 150 &&  parseInt(res[0]) <= 193
-                                if (measure === 'in') isValid = parseInt(res[0]) >= 59 &&  parseInt(res[0]) <= 76
-                            }
-                            break;
-                        case 'hcl':
-                            isValid = !! val.match(/#[0-9a-f]{6}/g);
-                            break;
-                        case 'ecl':
-                            isValid = !! val.match(/(amb|blu|brn|gry|grn|hzl|oth)/g)
-                            break;
-                        case 'pid':
-                            isValid = !! val.match(/\d{9}/g);
-                            break;                 
-                        default:
-                            break;
-                    }
-                    if(isValid === true)
-                    console.log(c + ': ' + raw[1] + ', isValid: ' + isValid)
-                 }
-            }
-            if(isValid) result = result + 1;
-        }
-    });
-    console.log(result)
-
-}
-
-day4Part2(input);
-// const tester = () => {
-//     val = '1984'
-//     console.log(isValid = parseInt(val) <= 2002 && parseInt(val) >= 1920)
-
-// }
-
-// tester()
-
-
-
-const input = `iyr:1928 cid:150 pid:476113241 eyr:2039 hcl:a5ac0f
+input = """
+iyr:1928 cid:150 pid:476113241 eyr:2039 hcl:a5ac0f
 ecl:#25f8d2
 byr:2027 hgt:190
 
@@ -1041,4 +959,31 @@ hcl:#d257c7 eyr:2036
 iyr:2018
 ecl:#5b11eb
 byr:1950
-`;
+"""
+
+fields = {
+    "byr": lambda x: 1920 <= int(x) <= 2002,
+    "iyr": lambda x: 2010 <= int(x) <= 2020,
+    "eyr": lambda x: 2020 <= int(x) <= 2030,
+    "hgt": lambda x: (x.endswith("cm") and 150 <= int(x[:-2]) <= 193) or
+                     (x.endswith("in") and 59 <= int(x[:-2]) <= 76),
+    "hcl": lambda x: re.fullmatch(r"#[\da-f]{6}", x),
+    "ecl": lambda x: x in ("amb", "blu", "brn", "gry", "grn", "hzl", "oth"),
+    "pid": lambda x: re.fullmatch(r"\d{9}", x),
+}
+
+present = 0
+valid = 0
+
+for line in input.split("\n\n"):
+    passport = dict(l.split(":") for l in line.split())
+
+    if not passport.keys() >= fields.keys():
+        continue
+
+    present += 1
+    valid += all(data(passport[field])
+                 for field, data in fields.items())
+
+print(present)
+print(valid)
